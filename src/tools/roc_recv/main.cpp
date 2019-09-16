@@ -15,6 +15,7 @@
 #include "roc_core/scoped_destructor.h"
 #include "roc_core/unique_ptr.h"
 #include "roc_netio/transceiver.h"
+#include "roc_packet/address_to_str.h"
 #include "roc_pipeline/parse_port.h"
 #include "roc_pipeline/receiver.h"
 #include "roc_sndio/backend_dispatcher.h"
@@ -24,6 +25,50 @@
 #include "roc_recv/cmdline.h"
 
 using namespace roc;
+
+namespace {
+
+bool set_multicast_iface(packet::Address& address, const char* miface) {
+    roc_panic_if_not(address.valid());
+
+    if (!address.multicast()) {
+        roc_log(LogError, "can't set multicast interface %s for non-multicast address %s",
+                miface, packet::address_to_str(address).c_str());
+        return false;
+    }
+
+    if (!strlen(miface)) {
+        roc_log(LogError, "can't set empty multicast interface for address %s",
+                packet::address_to_str(address).c_str());
+        return false;
+    }
+
+    switch (address.version()) {
+    case 4: {
+        if (!address.set_multicast_iface_v4(miface)) {
+            roc_log(LogError, "can't set multicast interface %s for address %s", miface,
+                    packet::address_to_str(address).c_str());
+            return false;
+        }
+
+        break;
+    }
+    case 6: {
+        if (!address.set_multicast_iface_v6(miface)) {
+            roc_log(LogError, "can't set multicast interface %s for address %s", miface,
+                    packet::address_to_str(address).c_str());
+            return false;
+        }
+
+        break;
+    }
+    default:
+        return false;
+    }
+
+    return true;
+}
+} // namespace
 
 int main(int argc, char** argv) {
     core::CrashHandler crash_handler;
@@ -247,12 +292,15 @@ int main(int argc, char** argv) {
     if (args.source_given) {
         pipeline::PortConfig port;
 
-        if (!pipeline::parse_port(pipeline::Port_AudioSource, args.source_arg,
-                                  port)) {
+        if (!pipeline::parse_port(pipeline::Port_AudioSource, args.source_arg, port)) {
             roc_log(LogError, "can't parse source port: %s", args.source_arg);
             return 1;
         }
-
+        if (args.miface_given) {
+            if (!set_multicast_iface(port.address, args.miface_arg)) {
+                return 1;
+            }
+        }
         if (!trx.add_udp_receiver(port.address, receiver)) {
             roc_log(LogError, "can't bind source port: %s", args.source_arg);
             return 1;
@@ -266,10 +314,15 @@ int main(int argc, char** argv) {
     if (args.repair_given) {
         pipeline::PortConfig port;
 
-        if (!pipeline::parse_port(pipeline::Port_AudioRepair, args.repair_arg,
-                                  port)) {
+        if (!pipeline::parse_port(pipeline::Port_AudioRepair, args.repair_arg, port)) {
             roc_log(LogError, "can't parse repair port: %s", args.repair_arg);
             return 1;
+        }
+
+        if (args.miface_given) {
+            if (!set_multicast_iface(port.address, args.miface_arg)) {
+                return 1;
+            }
         }
         if (!trx.add_udp_receiver(port.address, receiver)) {
             roc_log(LogError, "can't bind repair port: %s", args.repair_arg);

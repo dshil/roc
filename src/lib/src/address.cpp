@@ -67,6 +67,46 @@ int roc_address_init(roc_address* address, roc_family family, const char* ip, in
     return -1;
 }
 
+int roc_address_set_multicast_interface(roc_address* address,
+                                        roc_family family,
+                                        const char* iface) {
+    if (!address) {
+        return -1;
+    }
+
+    if (!iface) {
+        return -1;
+    }
+
+    packet::Address& pa = get_address(address);
+
+    if (!pa.multicast()) {
+        return -1;
+    }
+
+    if (family == ROC_AF_AUTO || family == ROC_AF_IPv4) {
+        if (pa.set_multicast_iface_v4(iface)) {
+            if (pa.version() == 6) {
+                return -1;
+            }
+
+            return 0;
+        }
+    }
+
+    if (family == ROC_AF_AUTO || family == ROC_AF_IPv6) {
+        if (pa.set_multicast_iface_v6(iface)) {
+            if (pa.version() == 4) {
+                return -1;
+            }
+
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
 roc_family roc_address_family(const roc_address* address) {
     if (!address) {
         return ROC_AF_INVALID;
@@ -117,4 +157,27 @@ int roc_address_port(const roc_address* address) {
     }
 
     return port;
+}
+
+const char*
+roc_address_multicast_interface(const roc_address* address, char* buf, size_t bufsz) {
+    if (!address) {
+        return NULL;
+    }
+
+    if (!buf) {
+        return NULL;
+    }
+
+    const packet::Address& pa = get_address(address);
+
+    if (!pa.has_multicast_iface()) {
+        return NULL;
+    }
+
+    if (!pa.get_multicast_iface(buf, bufsz)) {
+        return NULL;
+    }
+
+    return buf;
 }

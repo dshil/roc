@@ -37,7 +37,7 @@ typedef enum roc_family {
 
 enum {
     /** Address struct size. */
-    ROC_ADDRESS_SIZE = 64
+    ROC_ADDRESS_SIZE = 256
 };
 
 /** Network address.
@@ -85,6 +85,22 @@ typedef struct roc_address {
 ROC_API int
 roc_address_init(roc_address* address, roc_family family, const char* ip, int port);
 
+/** Set multicast interface address.
+ *
+ * @b Parameters
+ *  - @p address should point to a properly initialized address struct
+ *  - @p family should be @c ROC_AF_AUTO, @c ROC_AF_IPv4, or @c ROC_AF_IPv6
+ *  - @p iface should point to a zero-terminated string with a valid IPv4 or
+ *    IPv6 multicast address
+ *
+ * @b Returns
+ *  - returns zero if no error occurred
+ *  - returns a negative value if the arguments are invalid
+ */
+ROC_API int roc_address_set_multicast_interface(roc_address* address,
+                                                roc_family family,
+                                                const char* iface);
+
 /** Get address family.
  *
  * @b Parameters
@@ -125,6 +141,23 @@ ROC_API const char* roc_address_ip(const roc_address* address, char* buf, size_t
  *  - returns a negative value if the arguments are invalid
  */
 ROC_API int roc_address_port(const roc_address* address);
+
+/** Get multicast interface address.
+ *
+ * @b Parameters
+ *  - @p address should point to a properly initialized address struct
+ *  - @p buf should point to a probably uninitialized buffer allocated by user at least
+ *    of the @p bufsz size
+ *  - @p bufsz defines the @p buf size
+ *
+ * @b Returns
+ *  - returns @p buf if the multicast address was successfully stored into the @p buf
+ *  - returns NULL if the arguments are invalid
+ *  - returns NULL if the multicast address is not set
+ *  - returns NULL if the buffer is too small to store the formatted multicast address
+ */
+ROC_API const char*
+roc_address_multicast_interface(const roc_address* address, char* buf, size_t bufsz);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -19,8 +19,8 @@ Options
 -v, --verbose             Increase verbosity level (may be used multiple times)
 -o, --output=OUTPUT       Output file or device
 -d, --driver=DRIVER       Output driver
---s, --source=PORT        Source port triplet
---r, --repair=PORT        Repair port triplet
+-s, --source=PORT         Source port triplet
+-r, --repair=PORT         Repair port triplet
 --sess-latency=STRING     Session target latency, TIME units
 --min-latency=STRING      Session minimum latency, TIME units
 --max-latency=STRING      Session maximum latency, TIME units
@@ -80,6 +80,8 @@ For example:
 - rtp+rs8m:127.0.0.1:10001
 - rtp+rs8m:[::1]:10001
 
+If FEC is enabled on sender, a pair of a source and repair ports should be used for communication between sender and receiver. If FEC is disabled, a single source port should be used instead.
+
 Supported protocols for source ports:
 
 - rtp (bare RTP, no FEC scheme)
@@ -100,6 +102,12 @@ Time
 EXAMPLES
 ========
 
+Listen on one bare RTP port on all IPv4 interfaces:
+
+.. code::
+
+    $ roc-recv -vv -s rtp::10001
+
 Listen on two ports on all IPv4 interfaces (but not IPv6):
 
 .. code::
@@ -112,11 +120,35 @@ Listen on two ports on all IPv6 interfaces (but not IPv4):
 
     $ roc-recv -vv -s rtp+rs8m:[::]:10001 -r rs8m:[::]:10002
 
+Listen on two ports on all IPv4 interfaces (using LDPC scheme)
+
+.. code::
+
+    $ roc-recv -vv -s rtp+ldpc::10001 -r ldpc::10002
+
 Listen on two ports on a particular interface:
 
 .. code::
 
     $ roc-recv -vv -s rtp+rs8m:192.168.0.3:10001 -r rs8m:192.168.0.3:10002
+
+Listen on two ports on a particular multicast address (but not join to a multicast group):
+
+.. code::
+
+    $ roc-recv -vv -s rtp+rs8m:225.1.2.3:10001 -r rs8m:225.1.2.3:10002
+
+Listen on two ports on a particular multicast address and join to a multicast group on all interfaces:
+
+.. code::
+
+    $ roc-recv -vv -s rtp+rs8m:225.1.2.3:10001 -r rs8m:225.1.2.3:10002 --miface 0.0.0.0
+
+Listen on two ports on a particular multicast address and join to a multicast group on a particular interface:
+
+.. code::
+
+    $ roc-recv -vv -s rtp+rs8m:225.1.2.3:10001 -r rs8m:225.1.2.3:10002 --miface 192.168.0.3
 
 Output to the default ALSA device:
 

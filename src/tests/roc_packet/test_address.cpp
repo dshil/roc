@@ -101,6 +101,33 @@ TEST(address, eq_ipv4) {
     CHECK(addr1 != addr4);
 }
 
+TEST(address, eq_ipv4_multicast) {
+    Address addr1;
+    CHECK(addr1.set_ipv4("1.2.3.4", 123));
+    CHECK(addr1.set_multicast_iface_v4("0.0.0.0"));
+    CHECK(addr1.valid());
+
+    Address addr2;
+    CHECK(addr2.set_ipv4("1.2.3.4", 123));
+    CHECK(addr2.set_multicast_iface_v4("0.0.0.0"));
+    CHECK(addr2.valid());
+
+    Address addr3;
+    CHECK(addr3.set_ipv4("1.2.3.4", 123));
+    CHECK(addr3.set_multicast_iface_v4("0.0.0.1"));
+    CHECK(addr3.valid());
+
+    CHECK(addr1 == addr1);
+
+    CHECK(addr1 == addr2);
+    CHECK(!(addr1 != addr2));
+
+    CHECK(addr1 != addr3);
+    CHECK(addr2 != addr3);
+    CHECK(!(addr1 == addr3));
+    CHECK(!(addr2 == addr3));
+}
+
 TEST(address, eq_ipv6) {
     Address addr1;
     CHECK(addr1.set_ipv6("2001:db1::1", 123));
@@ -125,6 +152,36 @@ TEST(address, eq_ipv6) {
     CHECK(!(addr1 != addr2));
     CHECK(addr1 != addr3);
     CHECK(addr1 != addr4);
+}
+
+TEST(address, eq_ipv6_multicast) {
+    Address addr1;
+    CHECK(addr1.set_ipv6("ffee::", 123));
+    CHECK(addr1.set_multicast_iface_v6("::"));
+    CHECK(addr1.valid());
+    CHECK(addr1.multicast());
+
+    Address addr2;
+    CHECK(addr2.set_ipv6("ffee::", 123));
+    CHECK(addr2.set_multicast_iface_v6("::"));
+    CHECK(addr2.valid());
+    CHECK(addr1.multicast());
+
+    Address addr3;
+    CHECK(addr3.set_ipv6("ff00::", 123));
+    CHECK(addr3.set_multicast_iface_v6("::"));
+    CHECK(addr3.valid());
+    CHECK(addr1.multicast());
+
+    CHECK(addr1 == addr1);
+
+    CHECK(addr1 == addr2);
+    CHECK(!(addr1 != addr2));
+
+    CHECK(addr1 != addr3);
+    CHECK(addr2 != addr3);
+    CHECK(!(addr1 == addr3));
+    CHECK(!(addr2 == addr3));
 }
 
 TEST(address, multicast_ipv4) {
@@ -191,6 +248,52 @@ TEST(address, multicast_ipv6) {
         CHECK(addr.set_ipv6("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 123));
         CHECK(addr.valid());
         CHECK(addr.multicast());
+    }
+}
+
+TEST(address, multicast_ipv4_to_str) {
+    {
+        Address addr;
+
+        CHECK(addr.set_ipv4("239.255.255.255", 123));
+        CHECK(addr.valid());
+        CHECK(addr.multicast());
+
+        STRCMP_EQUAL("239.255.255.255:123", address_to_str(addr).c_str());
+    }
+    {
+        Address addr;
+
+        CHECK(addr.set_ipv4("239.255.255.255", 123));
+        CHECK(addr.valid());
+        CHECK(addr.multicast());
+
+        CHECK(addr.set_multicast_iface_v4("0.0.0.0"));
+
+        STRCMP_EQUAL("239.255.255.255@0.0.0.0:123", address_to_str(addr).c_str());
+    }
+}
+
+TEST(address, multicast_ipv6_to_str) {
+    {
+        Address addr;
+
+        CHECK(addr.set_ipv6("ff00::", 123));
+        CHECK(addr.valid());
+        CHECK(addr.multicast());
+
+        STRCMP_EQUAL("[ff00::]:123", address_to_str(addr).c_str());
+    }
+    {
+        Address addr;
+
+        CHECK(addr.set_ipv6("ff00::", 123));
+        CHECK(addr.valid());
+        CHECK(addr.multicast());
+
+        CHECK(addr.set_multicast_iface_v6("::"));
+
+        STRCMP_EQUAL("[ff00::]@[::]:123", address_to_str(addr).c_str());
     }
 }
 

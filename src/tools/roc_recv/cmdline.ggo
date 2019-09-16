@@ -16,6 +16,8 @@ section "Options"
 
     option "repair" r "Repair port triplet" typestr="PORT" string optional
 
+    option "miface" - "Multicast interface address" string optional
+
     option "sess-latency" - "Session target latency, TIME units"
         string optional
 

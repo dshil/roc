@@ -82,4 +82,66 @@ TEST(address, bad_args) {
     LONGS_EQUAL(-1, roc_address_port(&bad_addr));
 }
 
+TEST(address, multicast_ipv4) {
+    char buf[16];
+    roc_address addr;
+
+    LONGS_EQUAL(0, roc_address_init(&addr, ROC_AF_IPv4, "225.1.2.3", 123));
+
+    CHECK(!roc_address_multicast_interface(&addr, buf, sizeof(buf)));
+
+    LONGS_EQUAL(0, roc_address_set_multicast_interface(&addr, ROC_AF_IPv4, "0.0.0.0"));
+    STRCMP_EQUAL("0.0.0.0", roc_address_multicast_interface(&addr, buf, sizeof(buf)));
+}
+
+TEST(address, multicast_ipv6) {
+    char buf[128];
+    roc_address addr;
+
+    LONGS_EQUAL(0, roc_address_init(&addr, ROC_AF_IPv6, "ffee::", 123));
+
+    CHECK(!roc_address_multicast_interface(&addr, buf, sizeof(buf)));
+
+    LONGS_EQUAL(0, roc_address_set_multicast_interface(&addr, ROC_AF_IPv6, "::"));
+    STRCMP_EQUAL("::", roc_address_multicast_interface(&addr, buf, sizeof(buf)));
+}
+
+TEST(address, bad_multicast) {
+    { // set NULL multicast interface to NULL address
+        LONGS_EQUAL(-1, roc_address_set_multicast_interface(NULL, ROC_AF_IPv4, NULL));
+    }
+
+    { // set multicast interface to NULL address
+        LONGS_EQUAL(-1,
+                    roc_address_set_multicast_interface(NULL, ROC_AF_IPv4, "1.2.3.4"));
+    }
+    { // set NULL multicast interface
+        roc_address addr;
+        LONGS_EQUAL(0, roc_address_init(&addr, ROC_AF_IPv4, "1.2.3.4", 123));
+        LONGS_EQUAL(-1, roc_address_set_multicast_interface(&addr, ROC_AF_IPv4, NULL));
+    }
+    { // set IPv4 multicast interface to non-multicast address
+        roc_address addr;
+        LONGS_EQUAL(0, roc_address_init(&addr, ROC_AF_IPv4, "1.2.3.4", 123));
+        LONGS_EQUAL(-1,
+                    roc_address_set_multicast_interface(&addr, ROC_AF_IPv4, "0.0.0.0"));
+    }
+    { // set IPv6 multicast interface to non-multicast address
+        roc_address addr;
+        LONGS_EQUAL(0, roc_address_init(&addr, ROC_AF_IPv6, "2001:db8::1", 123));
+        LONGS_EQUAL(-1, roc_address_set_multicast_interface(&addr, ROC_AF_IPv6, "::"));
+    }
+    { // set IPv4 multicast interface to IPv6 network address
+        roc_address addr;
+        LONGS_EQUAL(0, roc_address_init(&addr, ROC_AF_IPv6, "ff00::", 123));
+        LONGS_EQUAL(-1,
+                    roc_address_set_multicast_interface(&addr, ROC_AF_IPv4, "0.0.0.0"));
+    }
+    { // set IPv6 multicast interface to IPv4 network address
+        roc_address addr;
+        LONGS_EQUAL(0, roc_address_init(&addr, ROC_AF_IPv4, "225.1.2.3", 123));
+        LONGS_EQUAL(-1, roc_address_set_multicast_interface(&addr, ROC_AF_IPv4, "::"));
+    }
+}
+
 } // namespace roc
