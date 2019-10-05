@@ -19,8 +19,8 @@ Options
 -v, --verbose             Increase verbosity level (may be used multiple times)
 -o, --output=OUTPUT       Output file or device
 -d, --driver=DRIVER       Output driver
--s, --source=PORT         Source port triplet (may be used multiple times)
--r, --repair=PORT         Repair port triplet (may be used multiple times)
+--s, --source=PORT        Source port triplet
+--r, --repair=PORT        Repair port triplet
 --sess-latency=STRING     Session target latency, TIME units
 --min-latency=STRING      Session minimum latency, TIME units
 --max-latency=STRING      Session maximum latency, TIME units
@@ -80,10 +80,6 @@ For example:
 - rtp+rs8m:127.0.0.1:10001
 - rtp+rs8m:[::1]:10001
 
-If FEC is enabled on sender, a pair of a source and repair ports should be used for communication between sender and receiver. If FEC is disabled, a single source port should be used instead.
-
-Receiver can listen on multiple source and repair ports of different protocols simultaneously. This allows multiple senders which use different protocols and FEC schemes to connect to a single receiver.
-
 Supported protocols for source ports:
 
 - rtp (bare RTP, no FEC scheme)
@@ -121,18 +117,6 @@ Listen on two ports on a particular interface:
 .. code::
 
     $ roc-recv -vv -s rtp+rs8m:192.168.0.3:10001 -r rs8m:192.168.0.3:10002
-
-Listen on two Reed-Solomon ports, two LDPC ports, and one bare RTP port:
-
-.. code::
-
-    $ roc-recv -vv -s rtp+rs8m::10001 -r rs8m::10002 -s rtp+ldpc::10003 -r ldpc::10004 -s rtp::10005
-
-Listen on two ports on all IPv4 interfaces and on two ports on all IPv6 interfaces:
-
-.. code::
-
-    $ roc-recv -vv -s rtp+rs8m::10001 -r rs8m::10002 -s rtp+rs8m:[::]:10001 -r rs8m:[::]:10002
 
 Output to the default ALSA device:
 
