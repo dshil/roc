@@ -6,24 +6,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#include "roc_netio/basic_port.h"
+#include "roc_netio/iconn_notifier.h"
 
 namespace roc {
 namespace netio {
 
-BasicPort::BasicPort(core::IAllocator& allocator)
-    : allocator_(allocator) {
-}
-
-BasicPort::~BasicPort() {
-}
-
-core::IAllocator& BasicPort::allocator() {
-    return allocator_;
-}
-
-void BasicPort::destroy() {
-    allocator_.destroy(*this);
+IConnNotifier::~IConnNotifier() {
 }
 
 } // namespace netio

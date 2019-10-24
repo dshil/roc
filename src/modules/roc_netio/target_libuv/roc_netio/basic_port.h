@@ -44,6 +44,9 @@ public:
     //!  Should be called from the event loop thread.
     virtual void async_close() = 0;
 
+    //! Return the underlying allocator.
+    core::IAllocator& allocator();
+
 private:
     friend class core::RefCnt<BasicPort>;
 

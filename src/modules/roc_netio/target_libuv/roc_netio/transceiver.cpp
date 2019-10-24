@@ -11,6 +11,8 @@
 #include "roc_core/log.h"
 #include "roc_core/panic.h"
 #include "roc_core/shared_ptr.h"
+#include "roc_netio/tcp_client_port.h"
+#include "roc_netio/tcp_server_port.h"
 
 namespace roc {
 namespace netio {
@@ -157,6 +159,50 @@ void Transceiver::remove_port(address::SocketAddr bind_address) {
         roc_panic_if_not(task.port);
         wait_port_closed_(*task.port);
     }
+}
+
+TCPConn* Transceiver::add_tcp_client(address::SocketAddr server_addr,
+                                     IConnNotifier& conn_notifier) {
+    if (!valid()) {
+        roc_panic("transceiver: can't use invalid transceiver");
+    }
+
+    Task task;
+    task.fn = &Transceiver::add_tcp_client_;
+    task.address = &server_addr;
+    task.conn_notifier = &conn_notifier;
+
+    run_task_(task);
+
+    if (!task.result) {
+        if (task.port) {
+            wait_port_closed_(*task.port);
+        }
+    }
+
+    return task.conn;
+}
+
+bool Transceiver::add_tcp_server(address::SocketAddr& bind_address,
+                                 IConnAcceptor& conn_acceptor) {
+    if (!valid()) {
+        roc_panic("transceiver: can't use invalid transceiver");
+    }
+
+    Task task;
+    task.fn = &Transceiver::add_tcp_server_;
+    task.address = &bind_address;
+    task.conn_acceptor = &conn_acceptor;
+
+    run_task_(task);
+
+    if (!task.result) {
+        if (task.port) {
+            wait_port_closed_(*task.port);
+        }
+    }
+
+    return task.result;
 }
 
 void Transceiver::handle_closed(BasicPort& port) {
@@ -312,6 +358,66 @@ bool Transceiver::add_udp_sender_(Task& task) {
     *task.address = sp->address();
 
     open_ports_.push_back(*sp);
+
+    return true;
+}
+
+bool Transceiver::add_tcp_server_(Task& task) {
+    core::SharedPtr<BasicPort> sp = new (allocator_)
+        TCPServerPort(*task.address, loop_, *this, *task.conn_acceptor, allocator_);
+    if (!sp) {
+        roc_log(LogError, "transceiver: can't add port %s: can't allocate tcp server",
+                address::socket_addr_to_str(*task.address).c_str());
+
+        return false;
+    }
+
+    task.port = sp.get();
+
+    if (!sp->open()) {
+        roc_log(LogError, "transceiver: can't add port %s: can't open tcp server",
+                address::socket_addr_to_str(*task.address).c_str());
+
+        closing_ports_.push_back(*sp);
+        sp->async_close();
+
+        return false;
+    }
+
+    *task.address = sp->address();
+    open_ports_.push_back(*sp);
+
+    return true;
+}
+
+bool Transceiver::add_tcp_client_(Task& task) {
+    core::SharedPtr<TCPClientPort> cp = new (allocator_)
+        TCPClientPort(*task.address, loop_, *this, *task.conn_notifier, allocator_);
+    if (!cp) {
+        roc_log(LogError,
+                "transceiver: can't add port: can't allocate client tcp connection to "
+                "port %s",
+                address::socket_addr_to_str(*task.address).c_str());
+
+        return false;
+    }
+
+    task.port = cp.get();
+
+    if (!cp->open()) {
+        roc_log(
+            LogError,
+            "transceiver: can't add port: can't open client tcp connection to port %s",
+            address::socket_addr_to_str(*task.address).c_str());
+
+        closing_ports_.push_back(*cp);
+        cp->async_close();
+
+        return false;
+    }
+
+    task.conn = cp.get();
+    open_ports_.push_back(*cp);
 
     return true;
 }
