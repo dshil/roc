@@ -44,12 +44,13 @@ public:
     //!  Should be called from the event loop thread.
     virtual void async_close() = 0;
 
+protected:
+    core::IAllocator& allocator_;
+
 private:
     friend class core::RefCnt<BasicPort>;
 
     void destroy();
-
-    core::IAllocator& allocator_;
 };
 
 } // namespace netio

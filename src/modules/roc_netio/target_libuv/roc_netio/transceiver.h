@@ -24,6 +24,9 @@
 #include "roc_core/thread.h"
 #include "roc_netio/basic_port.h"
 #include "roc_netio/iclose_handler.h"
+#include "roc_netio/iconn_acceptor.h"
+#include "roc_netio/iconn_notifier.h"
+#include "roc_netio/tcp_conn.h"
 #include "roc_netio/udp_receiver_port.h"
 #include "roc_netio/udp_sender_port.h"
 #include "roc_packet/iwriter.h"
@@ -83,7 +86,30 @@ public:
     //!  a new packet writer on success or null if error occurred
     packet::IWriter* add_udp_sender(address::SocketAddr& bind_address);
 
-    //! Remove sender or receiver port. Wait until port will be removed.
+    //! Add TCP server port.
+    //!
+    //! Creates a new TCP server, bind to @p bind_address, start listening on
+    //! @p bind_address. For every new incoming connection IConnAcceptor::accept()
+    //! is called on the event loop thread.
+    //!
+    //! If IP is zero, INADDR_ANY is used, i.e. the socket is bound to all network
+    //! interfaces. If port is zero, a random free port is selected and written
+    //! back to @p bind_address.
+    //!
+    //! @returns
+    //!  true on success or false if error occurred.
+    bool add_tcp_server(address::SocketAddr& bind_address, IConnAcceptor& conn_acceptor);
+
+    //! Add TCP client port.
+    //!
+    //! Creates a new TCP client, connect to @p serv_addr. Provided @p conn_notifier
+    //! will be notified when connection becomes readable or writable.
+    //!
+    //! @returns
+    //!  a new TCP connection on success or NULL if error occured.
+    TCPConn* add_tcp_client(address::SocketAddr serv_addr, IConnNotifier& conn_notifier);
+
+    //! Remove port. Wait until port will be removed.
     void remove_port(address::SocketAddr bind_address);
 
 private:
@@ -93,6 +119,9 @@ private:
         address::SocketAddr* address;
         packet::IWriter* writer;
         BasicPort* port;
+        TCPConn* conn;
+        IConnAcceptor* conn_acceptor;
+        IConnNotifier* conn_notifier;
 
         bool result;
         bool done;
@@ -102,6 +131,8 @@ private:
             , address(NULL)
             , writer(NULL)
             , port(NULL)
+            , conn(NULL)
+            , conn_acceptor(NULL)
             , result(false)
             , done(false) {
         }
@@ -121,6 +152,8 @@ private:
 
     bool add_udp_receiver_(Task&);
     bool add_udp_sender_(Task&);
+    bool add_tcp_server_(Task&);
+    bool add_tcp_client_(Task&);
 
     bool remove_port_(Task&);
     void wait_port_closed_(const BasicPort& port);
