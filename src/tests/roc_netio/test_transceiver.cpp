@@ -42,7 +42,7 @@ TEST(transceiver, init) {
     CHECK(trx.valid());
 }
 
-TEST(transceiver, bind_any) {
+TEST(transceiver, udp_bind_any) {
     packet::ConcurrentQueue queue;
 
     Transceiver trx(packet_pool, buffer_pool, allocator);
@@ -59,7 +59,7 @@ TEST(transceiver, bind_any) {
     trx.remove_port(rx_addr);
 }
 
-TEST(transceiver, bind_lo) {
+TEST(transceiver, udp_bind_lo) {
     packet::ConcurrentQueue queue;
 
     Transceiver trx(packet_pool, buffer_pool, allocator);
@@ -76,7 +76,7 @@ TEST(transceiver, bind_lo) {
     trx.remove_port(rx_addr);
 }
 
-TEST(transceiver, bind_addrinuse) {
+TEST(transceiver, udp_bind_addrinuse) {
     packet::ConcurrentQueue queue;
 
     Transceiver trx1(packet_pool, buffer_pool, allocator);
@@ -95,7 +95,7 @@ TEST(transceiver, bind_addrinuse) {
     CHECK(!trx2.add_udp_receiver(rx_addr, queue));
 }
 
-TEST(transceiver, add) {
+TEST(transceiver, udp_add) {
     packet::ConcurrentQueue queue;
 
     Transceiver trx(packet_pool, buffer_pool, allocator);
@@ -109,7 +109,7 @@ TEST(transceiver, add) {
     CHECK(trx.add_udp_receiver(rx_addr, queue));
 }
 
-TEST(transceiver, add_remove) {
+TEST(transceiver, udp_add_remove) {
     packet::ConcurrentQueue queue;
 
     Transceiver trx(packet_pool, buffer_pool, allocator);
@@ -134,7 +134,7 @@ TEST(transceiver, add_remove) {
     UNSIGNED_LONGS_EQUAL(0, trx.num_ports());
 }
 
-TEST(transceiver, add_remove_add) {
+TEST(transceiver, udp_add_remove_add) {
     Transceiver trx(packet_pool, buffer_pool, allocator);
 
     CHECK(trx.valid());
@@ -146,7 +146,7 @@ TEST(transceiver, add_remove_add) {
     CHECK(trx.add_udp_sender(tx_addr));
 }
 
-TEST(transceiver, add_duplicate) {
+TEST(transceiver, udp_add_duplicate) {
     packet::ConcurrentQueue queue;
 
     Transceiver trx(packet_pool, buffer_pool, allocator);
