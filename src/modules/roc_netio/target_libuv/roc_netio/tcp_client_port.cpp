@@ -62,5 +62,33 @@ namespace netio {
 /*             address::socket_addr_to_str(self.TCPConn::destination()).c_str()); */
 /* } */
 
+/* bool TCPConn::async_connect(uv_connect_t& req, void (*connect_cb)(uv_connect_t*, int))
+ * { */
+/*     roc_panic_if_not(handle_initialized_); */
+
+/*     if (int err = uv_tcp_connect(&req, &handle_, dst_addr_.saddr(), connect_cb)) { */
+/*         roc_log(LogError, "tcp conn (%s): uv_tcp_connect(): [%s] %s", type_str_, */
+/*                 uv_err_name(err), uv_strerror(err)); */
+/*         return false; */
+/*     } */
+
+/*     int addrlen = (int)dst_addr_.slen(); */
+/*     if (int err = uv_tcp_getsockname(&handle_, src_addr_.saddr(), &addrlen)) { */
+/*         roc_log(LogError, "tcp conn (%s): uv_tcp_getsockname(): [%s] %s", type_str_, */
+/*                 uv_err_name(err), uv_strerror(err)); */
+/*         return false; */
+/*     } */
+/*     if (addrlen != (int)src_addr_.slen()) { */
+/*         roc_log( */
+/*             LogError, */
+/*             "tcp conn (%s): uv_tcp_getsockname(): unexpected len: got=%lu expected =
+ * %lu", */
+/*             type_str_, (unsigned long)addrlen, (unsigned long)src_addr_.slen()); */
+/*         return false; */
+/*     } */
+
+/*     return true; */
+/* } */
+
 } // namespace netio
 } // namespace roc

@@ -17,7 +17,7 @@ TCPConn::TCPConn(const address::SocketAddr& dst_addr,
                  core::IAllocator& allocator)
     : allocator_(allocator)
     , started_(false)
-    , connected_(false)
+    , connect_status_(InvalidConnectStatus)
     , loop_initialized_(false)
     , stop_sem_initialized_(false)
     , handle_initialized_(false)
@@ -114,50 +114,59 @@ bool TCPConn::accept(uv_stream_t* stream) {
     return task.result;
 }
 
-bool TCPConn::async_connect(uv_connect_t& req, void (*connect_cb)(uv_connect_t*, int)) {
-    roc_panic_if_not(handle_initialized_);
-
-    if (int err = uv_tcp_connect(&req, &handle_, dst_addr_.saddr(), connect_cb)) {
-        roc_log(LogError, "tcp conn (%s): uv_tcp_connect(): [%s] %s", type_str_,
-                uv_err_name(err), uv_strerror(err));
-        return false;
+bool TCPConn::connect(IConnNotifier& conn_notifier) {
+    if (!valid()) {
+        roc_panic("tcp conn: can't use invalid tcp conn");
     }
 
-    int addrlen = (int)dst_addr_.slen();
-    if (int err = uv_tcp_getsockname(&handle_, src_addr_.saddr(), &addrlen)) {
-        roc_log(LogError, "tcp conn (%s): uv_tcp_getsockname(): [%s] %s", type_str_,
-                uv_err_name(err), uv_strerror(err));
+    if (conn_notifier_) {
+        roc_panic("tcp conn: can't connect already connected tcp conn");
+    }
+
+    uv_connect_t req;
+    req.data = this;
+
+    Task task;
+    task.fn = &TCPConn::connect_;
+    task.req = &req;
+
+    run_task_(task);
+
+    if (!task.result) {
         return false;
     }
-    if (addrlen != (int)src_addr_.slen()) {
-        roc_log(
-            LogError,
-            "tcp conn (%s): uv_tcp_getsockname(): unexpected len: got=%lu expected = %lu",
-            type_str_, (unsigned long)addrlen, (unsigned long)src_addr_.slen());
+
+    wait_connect_status_();
+
+    if (!connected()) {
         return false;
     }
+
+    conn_notifier_ = &conn_notifier;
+    conn_notifier_->notify_connected();
 
     return true;
-}
-
-void TCPConn::set_connected(IConnNotifier& conn_notifier) {
-    core::Mutex::Lock lock(mutex_);
-
-    if (connected_) {
-        return;
-    }
-
-    connected_ = true;
-    conn_notifier_ = &conn_notifier;
-
-    // TODO: extract from lock
-    conn_notifier_->notify_connected();
 }
 
 bool TCPConn::connected() const {
     core::Mutex::Lock lock(mutex_);
 
-    return connected_;
+    return connect_status_ == SuccessConnectStatus;
+}
+
+void TCPConn::set_connect_status_(ConnectStatus status) {
+    core::Mutex::Lock lock(mutex_);
+
+    connect_status_ = status;
+    cond_.broadcast();
+}
+
+void TCPConn::wait_connect_status_() {
+    core::Mutex::Lock lock(mutex_);
+
+    while (connect_status_ == InvalidConnectStatus) {
+        cond_.wait();
+    }
 }
 
 void TCPConn::task_sem_cb_(uv_async_t* handle) {
@@ -174,6 +183,19 @@ void TCPConn::stop_sem_cb_(uv_async_t* handle) {
 
     TCPConn& self = *(TCPConn*)handle->data;
     self.close_();
+}
+
+void TCPConn::connect_cb_(uv_connect_t* req, int status) {
+    roc_panic_if_not(req);
+    roc_panic_if_not(req->data);
+
+    TCPConn& self = *(TCPConn*)req->data;
+
+    if (status < 0) {
+        self.set_connect_status_(ErrorConnectStatus);
+    } else {
+        self.set_connect_status_(SuccessConnectStatus);
+    }
 }
 
 void TCPConn::run() {
@@ -239,6 +261,30 @@ bool TCPConn::accept_(Task& task) {
             "tcp conn (%s): uv_tcp_getpeername(): unexpected len: got=%lu expected=%lu",
             type_str_, (unsigned long)addrlen, (unsigned long)src_addr_.slen());
 
+        return false;
+    }
+
+    return true;
+}
+
+bool TCPConn::connect_(Task& task) {
+    if (int err = uv_tcp_connect(task.req, &handle_, dst_addr_.saddr(), connect_cb_)) {
+        roc_log(LogError, "tcp conn (%s): uv_tcp_connect(): [%s] %s", type_str_,
+                uv_err_name(err), uv_strerror(err));
+        return false;
+    }
+
+    int addrlen = (int)dst_addr_.slen();
+    if (int err = uv_tcp_getsockname(&handle_, src_addr_.saddr(), &addrlen)) {
+        roc_log(LogError, "tcp conn (%s): uv_tcp_getsockname(): [%s] %s", type_str_,
+                uv_err_name(err), uv_strerror(err));
+        return false;
+    }
+    if (addrlen != (int)src_addr_.slen()) {
+        roc_log(
+            LogError,
+            "tcp conn (%s): uv_tcp_getsockname(): unexpected len: got=%lu expected = %lu",
+            type_str_, (unsigned long)addrlen, (unsigned long)src_addr_.slen());
         return false;
     }
 

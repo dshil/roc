@@ -41,11 +41,11 @@ public:
     //! Destroy.
     virtual ~TCPConn();
 
-    //! Check if the connection was established.
-    bool connected() const;
-
     //! Check if connection was successfully constructed.
     bool valid() const;
+
+    //! Check if the connection was established.
+    bool connected() const;
 
     //! Return source address of the connection.
     const address::SocketAddr& source() const;
@@ -54,28 +54,18 @@ public:
     const address::SocketAddr& destination() const;
 
     //! Accept TCP connection.
-    //!
-    //! @remarks
-    //!  Should be called from the event loop thread.
     bool accept(uv_stream_t* stream);
 
-    //! Start asynchronous TCP connection and call @p connect_cb when
-    //! the connection is established.
-    //!
-    //! @remarks
-    //!  Should be called from the event loop thread.
-    bool async_connect(uv_connect_t& req, void (*connect_cb)(uv_connect_t*, int));
-
-    //! Mark connection as connected.
-    //!
-    //! @remarks
-    //!  Can be called from any thread.
-    void set_connected(IConnNotifier& conn_notifier);
+    //! Connect TCP connection.
+    bool connect(IConnNotifier& conn_notifier);
 
 private:
+    enum ConnectStatus { InvalidConnectStatus, SuccessConnectStatus, ErrorConnectStatus };
+
     struct Task : core::ListNode {
         bool (TCPConn::*fn)(Task&);
 
+        uv_connect_t* req;
         uv_stream_t* stream;
 
         bool result;
@@ -83,6 +73,7 @@ private:
 
         Task()
             : fn(NULL)
+            , req(NULL)
             , stream(NULL)
             , result(false)
             , done(false) {
@@ -91,6 +82,7 @@ private:
 
     static void stop_sem_cb_(uv_async_t* handle);
     static void task_sem_cb_(uv_async_t* handle);
+    static void connect_cb_(uv_connect_t* req, int status);
 
     virtual void run();
 
@@ -98,13 +90,17 @@ private:
     void run_task_(Task&);
 
     bool accept_(Task& task);
+    bool connect_(Task& task);
+
+    void set_connect_status_(ConnectStatus);
+    void wait_connect_status_();
 
     void close_();
 
     core::IAllocator& allocator_;
 
     bool started_;
-    bool connected_;
+    ConnectStatus connect_status_;
 
     uv_loop_t loop_;
     bool loop_initialized_;
