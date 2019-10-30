@@ -391,33 +391,31 @@ bool Transceiver::add_tcp_server_(Task& task) {
 }
 
 bool Transceiver::add_tcp_client_(Task& task) {
-    core::SharedPtr<TCPClientPort> cp = new (allocator_)
-        TCPClientPort(*task.address, loop_, *this, *task.conn_notifier, allocator_);
-    if (!cp) {
-        roc_log(LogError,
-                "transceiver: can't add port: can't allocate client tcp connection to "
-                "port %s",
-                address::socket_addr_to_str(*task.address).c_str());
+    /* core::SharedPtr<TCPConn> cp = new (allocator_) */
+    /*     TCPClientPort(*task.address, loop_, *this, *task.conn_notifier, allocator_); */
+    /* if (!cp) { */
+    /*     roc_log(LogError, */
+    /*             "transceiver: can't add port: can't allocate tcp client to port %s", */
+    /*             address::socket_addr_to_str(*task.address).c_str()); */
 
-        return false;
-    }
+    /*     return false; */
+    /* } */
 
-    task.port = cp.get();
+    /* task.port = cp.get(); */
 
-    if (!cp->open()) {
-        roc_log(
-            LogError,
-            "transceiver: can't add port: can't open client tcp connection to port %s",
-            address::socket_addr_to_str(*task.address).c_str());
+    /* if (!cp->open()) { */
+    /*     roc_log(LogError, "transceiver: can't add port: can't open tcp client to port
+     * %s", */
+    /*             address::socket_addr_to_str(*task.address).c_str()); */
 
-        closing_ports_.push_back(*cp);
-        cp->async_close();
+    /*     closing_ports_.push_back(*cp); */
+    /*     cp->async_close(); */
 
-        return false;
-    }
+    /*     return false; */
+    /* } */
 
-    task.conn = cp.get();
-    open_ports_.push_back(*cp);
+    /* task.conn = cp.get(); */
+    /* open_ports_.push_back(*cp); */
 
     return true;
 }

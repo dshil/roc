@@ -24,24 +24,24 @@
 namespace roc {
 namespace netio {
 
-class TCPClientPort : public TCPConn {
-public:
-    //! Initialize.
-    TCPClientPort(const address::SocketAddr& address,
-                  uv_loop_t& event_loop,
-                  ICloseHandler& close_handler,
-                  IConnNotifier& conn_notifier,
-                  core::IAllocator& allocator);
+/* class TCPClientPort : public TCPConn { */
+/* public: */
+/*     //! Initialize. */
+/*     TCPClientPort(const address::SocketAddr& address, */
+/*                   uv_loop_t& event_loop, */
+/*                   ICloseHandler& close_handler, */
+/*                   IConnNotifier& conn_notifier, */
+/*                   core::IAllocator& allocator); */
 
-    //! Open TCP client connection.
-    virtual bool open();
+/*     //! Open TCP client connection. */
+/*     virtual bool open(); */
 
-private:
-    static void connect_cb_(uv_connect_t* conn, int status);
+/* private: */
+/*     static void connect_cb_(uv_connect_t* conn, int status); */
 
-    uv_connect_t request_;
-    IConnNotifier& conn_notifier_;
-};
+/*     uv_connect_t request_; */
+/*     IConnNotifier& conn_notifier_; */
+/* }; */
 
 } // namespace netio
 } // namespace roc

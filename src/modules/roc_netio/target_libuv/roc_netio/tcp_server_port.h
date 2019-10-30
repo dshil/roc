@@ -55,6 +55,8 @@ private:
 
     virtual void handle_closed(BasicPort&);
 
+    core::SharedPtr<BasicPort> get_closing_port_(BasicPort& port);
+
     void close_();
     void async_close_ports_();
 

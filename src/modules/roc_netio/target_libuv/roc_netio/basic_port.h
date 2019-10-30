@@ -47,12 +47,13 @@ public:
     //! Return the underlying allocator.
     core::IAllocator& allocator();
 
+protected:
+    core::IAllocator& allocator_;
+
 private:
     friend class core::RefCnt<BasicPort>;
 
     void destroy();
-
-    core::IAllocator& allocator_;
 };
 
 } // namespace netio

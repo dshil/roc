@@ -18,10 +18,6 @@ BasicPort::BasicPort(core::IAllocator& allocator)
 BasicPort::~BasicPort() {
 }
 
-core::IAllocator& BasicPort::allocator() {
-    return allocator_;
-}
-
 void BasicPort::destroy() {
     allocator_.destroy(*this);
 }

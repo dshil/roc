@@ -108,20 +108,20 @@ void TCPServerPort::async_close() {
     }
     closing_ = true;
 
-    roc_log(LogInfo, "tcp server: closing port %s",
-            address::socket_addr_to_str(address_).c_str());
+    /* roc_log(LogInfo, "tcp server: closing port %s", */
+    /*         address::socket_addr_to_str(address_).c_str()); */
 
-    if (open_ports_.size()) {
-        async_close_ports_();
+    /* if (open_ports_.size()) { */
+    /*     async_close_ports_(); */
 
-        return;
-    }
+    /*     return; */
+    /* } */
 
-    if (closing_ports_.size()) {
-        return;
-    }
+    /* if (closing_ports_.size()) { */
+    /*     return; */
+    /* } */
 
-    close_();
+    /* close_(); */
 }
 
 void TCPServerPort::close_cb_(uv_handle_t* handle) {
@@ -154,77 +154,92 @@ void TCPServerPort::listen_cb_(uv_stream_t* stream, int status) {
 
     TCPServerPort& self = *(TCPServerPort*)stream->data;
 
-    core::SharedPtr<TCPConn> cp = new (self.allocator())
-        TCPConn(self.address_, "server", self, self.loop_, self.allocator());
-    if (!cp) {
-        roc_log(LogError, "tcp server: can't allocate connection");
+    /* core::SharedPtr<TCPConn> cp = new (self.allocator_) */
+    /*     TCPConn(self.address_, "server", self, self.loop_, self.allocator_); */
+    /* if (!cp) { */
+    /*     roc_log(LogError, "tcp server: can't allocate connection"); */
 
-        return;
-    }
+    /*     return; */
+    /* } */
 
-    if (!cp->open()) {
-        self.closing_ports_.push_back(*cp);
-        cp->async_close();
+    /* if (!cp->open()) { */
+    /*     self.closing_ports_.push_back(*cp); */
+    /*     cp->async_close(); */
 
-        return;
-    }
+    /*     return; */
+    /* } */
 
-    if (!cp->accept(stream)) {
-        self.closing_ports_.push_back(*cp);
-        cp->async_close();
+    /* if (!cp->accept(stream)) { */
+    /*     self.closing_ports_.push_back(*cp); */
+    /*     cp->async_close(); */
 
-        return;
-    }
+    /*     return; */
+    /* } */
 
-    IConnNotifier* conn_notifier = self.conn_acceptor_.accept(*cp);
-    if (!conn_notifier) {
-        roc_log(LogError, "tcp server: failed to accept new connection");
+    /* IConnNotifier* conn_notifier = self.conn_acceptor_.accept(*cp); */
+    /* if (!conn_notifier) { */
+    /*     roc_log(LogError, "tcp server: accept failed: src=%s dst=%s", */
+    /*             address::socket_addr_to_str(cp->address()).c_str(), */
+    /*             address::socket_addr_to_str(cp->destination()).c_str()); */
 
-        self.closing_ports_.push_back(*cp);
-        cp->async_close();
+    /*     self.closing_ports_.push_back(*cp); */
+    /*     cp->async_close(); */
 
-        return;
-    }
+    /*     return; */
+    /* } */
 
-    self.open_ports_.push_back(*cp);
-    cp->set_connected(*conn_notifier);
+    /* self.open_ports_.push_back(*cp); */
+    /* cp->set_connected(*conn_notifier); */
 
-    roc_log(LogInfo, "tcp server: accepted: src=%s dst=%s",
-            address::socket_addr_to_str(cp->address()).c_str(),
-            address::socket_addr_to_str(cp->destination()).c_str());
+    /* roc_log(LogInfo, "tcp server: accepted: src=%s dst=%s", */
+    /*         address::socket_addr_to_str(cp->address()).c_str(), */
+    /*         address::socket_addr_to_str(cp->destination()).c_str()); */
 }
 
 void TCPServerPort::handle_closed(BasicPort& port) {
-    for (core::SharedPtr<BasicPort> pp = closing_ports_.front(); pp;
-         pp = closing_ports_.nextof(*pp)) {
-        if (pp.get() != &port) {
-            continue;
-        }
+    /* core::SharedPtr<BasicPort> pp = get_closing_port_(port); */
+    /* roc_panic_if_not(pp); */
 
-        roc_log(LogDebug, "tcp server: asynchronous close finished: port %s",
-                address::socket_addr_to_str(port.address()).c_str());
+    /* closing_ports_.remove(*pp); */
 
-        closing_ports_.remove(*pp);
+    /* roc_log(LogDebug, "tcp server: asynchronous close finished: port %s", */
+    /*         address::socket_addr_to_str(port.address()).c_str()); */
 
-        break;
-    }
+    /* if (!closing_) { */
+    /*     return; */
+    /* } */
 
-    close_();
+    /* if (closing_ports_.size() || open_ports_.size()) { */
+    /*     return; */
+    /* } */
+
+    /* close_(); */
+}
+
+core::SharedPtr<BasicPort> TCPServerPort::get_closing_port_(BasicPort& port) {
+    /* for (core::SharedPtr<BasicPort> pp = closing_ports_.front(); pp; */
+    /*      pp = closing_ports_.nextof(*pp)) { */
+    /*     if (pp.get() != &port) { */
+    /*         continue; */
+    /*     } */
+
+    /*     return pp; */
+    /* } */
+
+    return NULL;
 }
 
 void TCPServerPort::close_() {
-    if (closing_ && !closing_ports_.size() && !open_ports_.size()) {
-        uv_close((uv_handle_t*)&handle_, close_cb_);
-    }
+    /* uv_close((uv_handle_t*)&handle_, close_cb_); */
 }
 
 void TCPServerPort::async_close_ports_() {
-    while (core::SharedPtr<BasicPort> port = open_ports_.front()) {
-        open_ports_.remove(*port);
-        closing_ports_.push_back(*port);
+    /* while (core::SharedPtr<BasicPort> port = open_ports_.front()) { */
+    /*     open_ports_.remove(*port); */
+    /*     closing_ports_.push_back(*port); */
 
-        port->async_close();
-    }
+    /*     port->async_close(); */
+    /* } */
 }
 
 } // namespace netio
