@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-//! @file roc_netio/stream_buffer.h
+//! @file roc_netio/target_libuv/roc_netio/stream_buffer.h
 //! @brief Dynamic stream of buffers.
 
 #ifndef ROC_NETIO_STREAM_BUFFER_H_

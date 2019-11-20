@@ -44,7 +44,6 @@ bool TCPServerPort::open() {
                 uv_strerror(err));
         return false;
     }
-
     handle_.data = this;
     handle_initialized_ = true;
 

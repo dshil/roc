@@ -22,13 +22,13 @@ public:
     virtual ~IConnNotifier();
 
     //! Is notified when TCP connection becomes connected.
-    virtual void notify_connected() = 0;
+    virtual void notify_connected(bool connected) = 0;
+
+    //! Is notified when TCP connection becomes writable.
+    virtual void notify_writable(bool written) = 0;
 
     //! Is notified when TCP connection becomes readable.
     virtual void notify_readable() = 0;
-
-    //! Is notified when TCP connection becomes writable.
-    virtual void notify_writable() = 0;
 };
 
 } // namespace netio

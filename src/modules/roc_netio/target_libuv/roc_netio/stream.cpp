@@ -29,7 +29,7 @@ size_t Stream::size() const {
     return ret;
 }
 
-void Stream::write(const StreamBufferPtr& buffer) {
+void Stream::append(const StreamBufferPtr& buffer) {
     core::Mutex::Lock lock(mutex_);
 
     roc_panic_if_not(buffer);

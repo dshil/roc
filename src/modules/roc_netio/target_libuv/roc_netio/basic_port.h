@@ -45,6 +45,7 @@ public:
     virtual void async_close() = 0;
 
 protected:
+    //! Port allocator.
     core::IAllocator& allocator_;
 
 private:

@@ -181,12 +181,6 @@ TCPConn* Transceiver::add_tcp_client(address::SocketAddr server_addr,
         return NULL;
     }
 
-    if (!task.conn->connect(conn_notifier)) {
-        remove_port(task.conn->address());
-
-        return NULL;
-    }
-
     return task.conn;
 }
 
@@ -415,6 +409,18 @@ bool Transceiver::add_tcp_client_(Task& task) {
         roc_log(
             LogError,
             "transceiver: can't add port: can't open client tcp connection to port %s",
+            address::socket_addr_to_str(*task.address).c_str());
+
+        closing_ports_.push_back(*cp);
+        cp->async_close();
+
+        return false;
+    }
+
+    if (!cp->connect(*task.conn_notifier)) {
+        roc_log(
+            LogError,
+            "transceiver: can't add port: can't can't start tcp connection to port %s",
             address::socket_addr_to_str(*task.address).c_str());
 
         closing_ports_.push_back(*cp);

@@ -42,8 +42,8 @@ TEST(stream, read) {
 
         Stream stream;
 
-        stream.write(buf1);
-        stream.write(buf2);
+        stream.append(buf1);
+        stream.append(buf2);
 
         memcpy(buf1->data(), "foo", strlen("foo"));
         memcpy(buf2->data(), "bar", strlen("bar"));
@@ -63,8 +63,8 @@ TEST(stream, read) {
 
         Stream stream;
 
-        stream.write(buf1);
-        stream.write(buf2);
+        stream.append(buf1);
+        stream.append(buf2);
 
         memcpy(buf1->data(), "foo", strlen("foo"));
         memcpy(buf2->data(), "bar", strlen("bar"));
@@ -97,8 +97,8 @@ TEST(stream, read) {
 
         Stream stream;
 
-        stream.write(buf1);
-        stream.write(buf2);
+        stream.append(buf1);
+        stream.append(buf2);
 
         memcpy(buf1->data(), "foo", strlen("foo"));
         memcpy(buf2->data(), "bar", strlen("bar"));
@@ -139,8 +139,8 @@ TEST(stream, read) {
 
         Stream stream;
 
-        stream.write(buf1);
-        stream.write(buf2);
+        stream.append(buf1);
+        stream.append(buf2);
 
         memcpy(buf1->data(), "foo", strlen("foo"));
         memcpy(buf2->data(), "bar", strlen("bar"));

@@ -33,7 +33,7 @@ namespace netio {
 class TCPConn : public BasicPort {
 public:
     //! Connection status.
-    enum ConnectStatus { Status_None, Status_Connected, Status_Error };
+    enum ConnectStatus { Status_None, Status_OK, Status_Error };
 
     //! Initialize.
     TCPConn(const address::SocketAddr& dst_addr,
@@ -60,11 +60,11 @@ public:
     //!  Should be called from the event loop thread.
     virtual void async_close();
 
-    //! Check if the connection was established.
-    bool connected() const;
-
     //! Return destination address of the connection.
     const address::SocketAddr& destination_address() const;
+
+    //! Return true if the connection was successfully established.
+    bool connected() const;
 
     //! Accept TCP connection.
     //!
@@ -99,46 +99,44 @@ public:
     ssize_t read(char* buf, size_t len);
 
 private:
-    struct Task : core::ListNode {
-        bool (TCPConn::*fn)(Task&);
-
-        uv_buf_t* write_buf;
-        uv_write_t* write_req;
-
-        bool result;
-        bool done;
-
-        Task()
-            : fn(NULL)
-            , write_buf(NULL)
-            , write_req(NULL)
-            , result(false)
-            , done(false) {
+    class WriteTask : public core::RefCnt<WriteTask>, public core::ListNode {
+    public:
+        explicit WriteTask(core::IAllocator& allocator)
+            : buffer(allocator)
+            , allocator_(allocator) {
         }
+
+        StreamBuffer buffer;
+        uv_write_t request;
+
+    private:
+        friend class core::RefCnt<WriteTask>;
+
+        void destroy() {
+            allocator_.destroy(*this);
+        }
+
+        core::IAllocator& allocator_;
     };
 
     static void close_cb_(uv_handle_t* handle);
-    static void task_sem_cb_(uv_async_t* handle);
     static void connect_cb_(uv_connect_t* req, int status);
+    static void write_sem_cb_(uv_async_t* handle);
     static void write_cb_(uv_write_t* req, int status);
     static void alloc_cb_(uv_handle_t* handle, size_t size, uv_buf_t* buf);
     static void read_cb_(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 
     void close_();
 
-    void process_tasks_();
-    void run_task_(Task&);
-
-    bool connect_(Task& task);
     void set_connect_status_(ConnectStatus);
-    void wait_connect_status_();
 
-    bool write_(Task& task);
+    bool add_write_task(const char*, size_t);
+    void process_write_tasks_();
 
     uv_loop_t& loop_;
 
-    uv_async_t task_sem_;
-    bool task_sem_initialized_;
+    uv_async_t write_sem_;
+    bool write_sem_initialized_;
 
     uv_tcp_t handle_;
     bool handle_initialized_;
@@ -157,9 +155,9 @@ private:
 
     const char* type_str_;
 
-    core::List<Task, core::NoOwnership> tasks_;
-
     Stream stream_;
+
+    core::List<WriteTask> write_tasks_;
 
     core::Mutex mutex_;
     core::Cond cond_;

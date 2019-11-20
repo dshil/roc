@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-//! @file roc_netio/stream.h
+//! @file roc_netio/target_libuv/roc_netio/stream.h
 //! @brief Stream of bytes.
 
 #ifndef ROC_NETIO_STREAM_H_
@@ -28,8 +28,8 @@ public:
     //! Return number of bytes in stream available to read.
     size_t size() const;
 
-    //! Write @p buffer to the stream.
-    void write(const StreamBufferPtr& buffer);
+    //! Append @p buffer to the stream.
+    void append(const StreamBufferPtr& buffer);
 
     //! Read @p len bytes to @p data from the stream.
     //!
